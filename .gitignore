@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.env
+venv/
+.env
+
+# SQLite
+*.sqlite
+*.sqlite3
+
+# Secrets
+app/secret.yaml
+backend/secret.yaml
+
+# IDE
+.vscode/
+node_modules/
+.DS_Store

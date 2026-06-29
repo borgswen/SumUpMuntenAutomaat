@@ -7,8 +7,6 @@ from sqlalchemy import Column, DateTime, Float, Integer, String, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.config import DATABASE_PATH
-
 Base = declarative_base()
 
 
@@ -25,12 +23,10 @@ class PaymentRecord(Base):
 
 
 class Database:
-    def __init__(self, db_path: Path | str | None = None) -> None:
-        self.db_path = Path(db_path or DATABASE_PATH)
+    def __init__(self, db_path: Path | str) -> None:
+        self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
-        self.engine = create_engine(
-            f"sqlite:///{self.db_path}", connect_args={"check_same_thread": False}
-        )
+        self.engine = create_engine(f"sqlite:///{self.db_path}", connect_args={"check_same_thread": False})
         self.SessionLocal = sessionmaker(bind=self.engine)
         Base.metadata.create_all(self.engine)
 
