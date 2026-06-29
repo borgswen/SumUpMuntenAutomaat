@@ -1,4 +1,11 @@
-# config variable
+import os
 
-Prijs_munt = 1.55
-Knop opties = 5,10,15,20
+PRICE_PER_COIN = 1.55
+PRESET_AMOUNTS = [5, 10, 15, 20]
+USE_SIMULATOR = os.getenv("USE_SIMULATOR", "true").lower() in {"1", "true", "yes"}
+SUMUP_API_BASE = os.getenv("SUMUP_API_BASE", "https://api.sumup.com")
+SUMUP_CLIENT_ID = os.getenv("SUMUP_CLIENT_ID")
+SUMUP_CLIENT_SECRET = os.getenv("SUMUP_CLIENT_SECRET")
+SUMUP_REFRESH_TOKEN = os.getenv("SUMUP_REFRESH_TOKEN")
+SUMUP_MERCHANT_EMAIL = os.getenv("SUMUP_MERCHANT_EMAIL")
+SUMUP_CURRENCY = os.getenv("SUMUP_CURRENCY", "EUR")

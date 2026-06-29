@@ -1,10 +1,29 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Coins } from "lucide-react";
 
 type Screen = "welcome" | "confirm" | "custom" | "pay" | "dispensing" | "thanks";
 
+type BackendState =
+  | "idle"
+  | "selected"
+  | "awaiting_payment"
+  | "payment_authorized"
+  | "dispensing"
+  | "complete"
+  | "error";
+
+type BackendMessage =
+  | { type: "state"; payload: { state: BackendState; amount: number; price: number; transaction_id?: string | null; error?: string | null } }
+  | { type: "status"; payload: { message: string } }
+  | { type: "payment_authorized"; payload: { transaction_id: string } }
+  | { type: "dispense_started"; payload: { amount: number } }
+  | { type: "dispense_progress"; payload: { current: number; total: number } }
+  | { type: "dispense_complete"; payload: { amount: number } }
+  | { type: "error"; payload: { message: string } };
+
 const PRICE_PER_COIN = 1.55;
 const PRESET_AMOUNTS = [5, 10, 20, 50];
+const WS_URL = "ws://localhost:8000/ws";
 
 function formatPrice(amount: number): string {
   return `€${(amount * PRICE_PER_COIN).toFixed(2).replace(".", ",")}`;
@@ -16,25 +35,82 @@ export default function App() {
   const [customInput, setCustomInput] = useState("");
   const [dispensed, setDispensed] = useState(0);
   const [countdown, setCountdown] = useState(5);
+  const [serverState, setServerState] = useState<BackendState>("idle");
+  const [statusMessage, setStatusMessage] = useState("Verbinding maken...");
+  const [connected, setConnected] = useState(false);
+  const socketRef = useRef<WebSocket | null>(null);
 
-  // Dispensing animation — fixed 3.5s window
   useEffect(() => {
-    if (screen !== "dispensing") return;
-    setDispensed(0);
-    const duration = 3500;
-    const start = Date.now();
-    const interval = setInterval(() => {
-      const progress = Math.min((Date.now() - start) / duration, 1);
-      setDispensed(Math.floor(progress * amount));
-      if (progress >= 1) {
-        clearInterval(interval);
-        setTimeout(() => setScreen("thanks"), 600);
-      }
-    }, 40);
-    return () => clearInterval(interval);
-  }, [screen, amount]);
+    const socket = new WebSocket(WS_URL);
+    socketRef.current = socket;
 
-  // Countdown on thanks screen
+    socket.addEventListener("open", () => {
+      setConnected(true);
+      setStatusMessage("Verbonden met backend");
+    });
+
+    socket.addEventListener("message", (event) => {
+      try {
+        const message = JSON.parse(event.data) as BackendMessage;
+        switch (message.type) {
+          case "state":
+            setServerState(message.payload.state);
+            setAmount(message.payload.amount);
+            if (message.payload.error) {
+              setStatusMessage(message.payload.error);
+            }
+            break;
+          case "status":
+            setStatusMessage(message.payload.message);
+            break;
+          case "dispense_progress":
+            setDispensed(message.payload.current);
+            break;
+          case "dispense_complete":
+            setStatusMessage("Dispensatie voltooid");
+            break;
+          case "error":
+            setStatusMessage(message.payload.message);
+            break;
+          default:
+            break;
+        }
+      } catch (error) {
+        console.error("Ongeldige backend-bericht:", error);
+      }
+    });
+
+    socket.addEventListener("close", () => {
+      setConnected(false);
+      setStatusMessage("Verbinding verbroken");
+    });
+
+    socket.addEventListener("error", () => {
+      setConnected(false);
+      setStatusMessage("Kan geen verbinding maken met backend");
+    });
+
+    return () => socket.close();
+  }, []);
+
+  useEffect(() => {
+    if (serverState === "idle") {
+      setScreen("welcome");
+      setCustomInput("");
+      setDispensed(0);
+    } else if (serverState === "selected") {
+      setScreen("confirm");
+    } else if (serverState === "awaiting_payment") {
+      setScreen("pay");
+    } else if (serverState === "payment_authorized" || serverState === "dispensing") {
+      setScreen("dispensing");
+    } else if (serverState === "complete") {
+      setScreen("thanks");
+    } else if (serverState === "error") {
+      setScreen("welcome");
+    }
+  }, [serverState]);
+
   useEffect(() => {
     if (screen !== "thanks") return;
     setCountdown(5);
@@ -50,13 +126,29 @@ export default function App() {
         setScreen("welcome");
         setAmount(0);
         setCustomInput("");
+        setServerState("idle");
       }, 300);
     }
   }, [countdown, screen]);
 
+  useEffect(() => {
+    if (screen === "dispensing") {
+      setDispensed(0);
+    }
+  }, [screen]);
+
+  const sendMessage = (message: unknown) => {
+    if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) {
+      setStatusMessage("Backend niet beschikbaar");
+      return;
+    }
+    socketRef.current.send(JSON.stringify(message));
+  };
+
   const selectAmount = (n: number) => {
     setAmount(n);
-    setScreen("confirm");
+    setCustomInput("");
+    sendMessage({ type: "select_amount", payload: { amount: n } });
   };
 
   const handleNumpad = (key: string) => {
@@ -67,20 +159,16 @@ export default function App() {
     } else {
       setCustomInput((prev) => {
         const next = prev + key;
-        if (parseInt(next) > 9999) return prev;
+        if (parseInt(next, 10) > 9999) return prev;
         return next;
       });
     }
   };
 
-  const customAmount = customInput ? parseInt(customInput) : 0;
+  const customAmount = customInput ? parseInt(customInput, 10) : 0;
 
   const startPayment = () => {
-    setScreen("pay");
-    setTimeout(() => {
-      setDispensed(0);
-      setScreen("dispensing");
-    }, 3000);
+    sendMessage({ type: "start_payment" });
   };
 
   return (
