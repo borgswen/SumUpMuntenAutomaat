@@ -9,3 +9,29 @@ De backend bevindt zich in de `backend/` map en is gebouwd met FastAPI, een stat
 ## Frontend
 
 De frontend bevindt zich in de `frontend/` map en is gebouwd met Vite en React.
+
+
+Dingen draaien voor test:
+
+Backend
+cd backend
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+pytest
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+Check daarna:
+
+http://localhost:8000/docs
+Frontend
+
+Open een tweede terminal:
+
+cd frontend
+npm install
+npm run dev
+
+Open daarna de URL die Vite geeft, meestal:
+
+http://localhost:5173
