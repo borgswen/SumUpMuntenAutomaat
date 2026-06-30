@@ -12,8 +12,11 @@ venv/
 *.sqlite3
 
 # Secrets
-app/secret.yaml
 backend/secret.yaml
+
+# Runtime database
+backend/data/
+*.db
 
 # IDE
 .vscode/

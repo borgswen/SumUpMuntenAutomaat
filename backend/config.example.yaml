@@ -1,0 +1,17 @@
+price_per_coin: 1.55
+preset_amounts: [5, 10, 15, 20]
+use_simulator: true
+database_path: data/payments.sqlite
+sumup_api_base: https://api.sumup.com
+sumup_currency: EUR
+simulation:
+  enabled: true
+  payment:
+    mode: success
+    delay_ms: 2500
+  hopper:
+    speed: 6
+    capacity: 2500
+    start_amount: 1732
+    jam_probability: 0.0
+    random_failures: false

@@ -26,11 +26,17 @@ Deze backend is ontworpen als een architectuurgerichte kioskservice met:
   - `preset_amounts`
   - `use_simulator`
   - `database_path`
-  - `simulator.payment_behavior`
-  - `simulator.payment_timeout_seconds`
-  - `simulator.hopper_behavior`
+  - `simulation.enabled`
+  - `simulation.payment.mode`
+  - `simulation.payment.delay_ms`
+  - `simulation.hopper.speed`
+  - `simulation.hopper.capacity`
+  - `simulation.hopper.start_amount`
+  - `simulation.hopper.jam_probability`
+  - `simulation.hopper.random_failures`
 
-- `backend/secret.yaml` bevat SumUp credentials wanneer `use_simulator: false`.
+- `backend/secrets.example.yaml` bevat voorbeeld SumUp credentials.
+- `backend/secret.yaml` mag lokaal bestaan voor echte secret waarden en wordt niet gedeeld.
 
 ## Runnen
 
@@ -51,3 +57,5 @@ pytest
 - `app/services` bevat domeinlogica voor betaling, hopper en transacties.
 - `app/api` bevat API- en WebSocket-laag.
 - `app/database` bevat SQLite-persistentie.
+
+> Let op: de oude root `app/` directory in de repository is legacy en wordt niet voor de backend gebruikt.
