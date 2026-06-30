@@ -4,7 +4,7 @@ Deze backend is ontworpen als een architectuurgerichte kioskservice met:
 - `FastAPI` voor HTTP en WebSocket communicatie
 - een centrale `StateMachine` voor statusbeheer
 - `PaymentService`, `HopperService` en `TransactionService`
-- configuratie via `config.yaml` en secrets via `secret.yaml`
+- configuratie via `config.yaml` en secrets via een lokale `secret.yaml`
 - simulator drivers voor development zonder hardware of SumUp
 
 ## Installatie
@@ -35,8 +35,8 @@ Deze backend is ontworpen als een architectuurgerichte kioskservice met:
   - `simulation.hopper.jam_probability`
   - `simulation.hopper.random_failures`
 
-- `backend/secrets.example.yaml` bevat voorbeeld SumUp credentials.
-- `backend/secret.yaml` mag lokaal bestaan voor echte secret waarden en wordt niet gedeeld.
+- `backend/secrets.example.yaml` bevat voorbeeldvelden voor SumUp credentials.
+- Kopieer `backend/secrets.example.yaml` naar `backend/secret.yaml` voor lokale secret waarden. `backend/secret.yaml` wordt niet gedeeld.
 
 ## Runnen
 
@@ -57,5 +57,3 @@ pytest
 - `app/services` bevat domeinlogica voor betaling, hopper en transacties.
 - `app/api` bevat API- en WebSocket-laag.
 - `app/database` bevat SQLite-persistentie.
-
-> Let op: de oude root `app/` directory in de repository is legacy en wordt niet voor de backend gebruikt.
