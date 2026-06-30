@@ -1,5 +1,9 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
+from typing import Any, Callable
+
+
+ProgressCallback = Callable[[int, int, int], Any]
 
 
 class HopperDriver(ABC):
@@ -20,5 +24,9 @@ class HopperDriver(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_status(self) -> dict[str, str]:
+    async def get_status(self) -> dict[str, Any]:
         raise NotImplementedError
+
+    def set_progress_callback(self, callback: ProgressCallback | None) -> None:
+        """Optional progress callback for simulators."""
+        self._progress_callback = callback

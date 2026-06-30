@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import WebSocket
+from pydantic import BaseModel, ValidationError
 
 from app.core.events import Event
 
@@ -26,9 +27,17 @@ class ConnectionManager:
                 self.active_connections.remove(connection)
 
 
+class WebSocketMessage(BaseModel):
+    type: str
+    payload: dict[str, Any] | None = None
+
+
 class WebSocketMessageParser:
     @staticmethod
-    def parse(raw: Any) -> dict[str, Any]:
+    def parse(raw: Any) -> WebSocketMessage:
         if not isinstance(raw, dict):
             raise ValueError("WebSocket payload must be a JSON object")
-        return raw
+        try:
+            return WebSocketMessage.parse_obj(raw)
+        except ValidationError as exc:
+            raise ValueError(f"Invalid WebSocket message: {exc}") from exc

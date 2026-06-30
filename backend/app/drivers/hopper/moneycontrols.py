@@ -10,6 +10,7 @@ class MoneyControlsHopper(HopperDriver):
     def __init__(self, port: str) -> None:
         self.port = port
         self.connected = False
+        self._progress_callback = None
 
     async def connect(self) -> None:
         await asyncio.sleep(0.1)

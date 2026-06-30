@@ -1,9 +1,8 @@
 from __future__ import annotations
-from dataclasses import dataclass
 from enum import Enum
 from typing import Callable
 
-from app.core.events import Event, EventType
+from app.core.events import Event, EventType, MachineContext
 
 
 class State(str, Enum):
@@ -16,36 +15,34 @@ class State(str, Enum):
     ERROR = "error"
 
 
-@dataclass
-class Context:
-    amount: int = 0
-    price: float = 0.0
-    transaction_id: str | None = None
-    error: str | None = None
-
-
-StateChangeHandler = Callable[[State, Context], None]
+StateChangeHandler = Callable[[State, MachineContext], None]
 
 
 class StateMachine:
     def __init__(self, on_change: StateChangeHandler | None = None) -> None:
         self.state = State.IDLE
-        self.context = Context()
+        self.context = MachineContext()
         self.on_change = on_change
 
     def _transition(self, new_state: State) -> Event:
         self.state = new_state
         if self.on_change:
             self.on_change(self.state, self.context)
-        return Event(EventType.STATE_CHANGED, {"state": self.state.value, "context": self.context})
+        return Event(
+            EventType.STATE_CHANGED,
+            {
+                "state": self.state.value,
+                "context": self.context.to_dict(),
+            },
+        )
 
     def select_amount(self, amount: int, price_per_coin: float) -> Event:
         if amount < 1:
             raise ValueError("Amount must be at least 1")
-        self.context.amount = amount
-        self.context.price = round(amount * price_per_coin, 2)
-        self.context.transaction_id = None
-        self.context.error = None
+        self.context = MachineContext(
+            amount=amount,
+            price=round(amount * price_per_coin, 2),
+        )
         return self._transition(State.SELECTED)
 
     def awaiting_payment(self) -> Event:
@@ -56,7 +53,11 @@ class StateMachine:
     def payment_authorized(self, transaction_id: str) -> Event:
         if self.state != State.AWAITING_PAYMENT:
             raise RuntimeError("Cannot authorize payment from current state")
-        self.context.transaction_id = transaction_id
+        self.context = MachineContext(
+            amount=self.context.amount,
+            price=self.context.price,
+            transaction_id=transaction_id,
+        )
         return self._transition(State.PAYMENT_AUTHORIZED)
 
     def dispense(self) -> Event:
@@ -70,9 +71,14 @@ class StateMachine:
         return self._transition(State.COMPLETE)
 
     def fail(self, error: str) -> Event:
-        self.context.error = error
+        self.context = MachineContext(
+            amount=self.context.amount,
+            price=self.context.price,
+            transaction_id=self.context.transaction_id,
+            error=error,
+        )
         return self._transition(State.ERROR)
 
     def reset(self) -> Event:
-        self.context = Context()
+        self.context = MachineContext()
         return self._transition(State.IDLE)
