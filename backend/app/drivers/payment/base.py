@@ -12,7 +12,7 @@ class PaymentDriver(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def start_payment(self, amount: int) -> dict[str, str]:
+    async def start_payment(self, amount: int, price: float | None = None) -> dict[str, str]:
         raise NotImplementedError
 
     @abstractmethod

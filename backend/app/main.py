@@ -18,7 +18,7 @@ from app.database.sqlite import Database
 from app.drivers.hopper.moneycontrols import MoneyControlsHopper
 from app.drivers.hopper.simulator import SimulatorHopper
 from app.drivers.payment.simulator import SimulatorPayment
-from app.drivers.payment.sumup import SumUpPayment
+from app.drivers.payment.sumup import SumUpSoloPaymentDriver
 from app.services.hopper_service import HopperService
 from app.services.payment_service import PaymentService
 from app.services.transaction_service import TransactionService
@@ -42,7 +42,17 @@ payment_driver = (
         delay_ms=config.simulation.payment.delay_ms,
     )
     if config.use_simulator and config.simulation.enabled
-    else SumUpPayment(secrets, config.sumup_api_base, config.sumup_currency)
+    else SumUpSoloPaymentDriver(
+        secret_config=secrets,
+        api_base=config.sumup_api_base,
+        merchant_code=config.sumup_merchant_code,
+        reader_id=config.sumup_reader_id,
+        reader_code=config.sumup_reader_code,
+        affiliate_key=config.sumup_affiliate_key,
+        affiliate_app_id=config.sumup_affiliate_app_id,
+        currency=config.sumup_currency,
+        timeout_seconds=config.payment_timeout_seconds,
+    )
 )
 hopper_driver = (
     SimulatorHopper(
@@ -180,7 +190,7 @@ async def process_purchase_flow() -> None:
     transaction_id: str | None = None
     try:
         logger.info("Starting payment for %s tokens", state_machine.context.amount)
-        result = await payment_service.start_payment(state_machine.context.amount)
+        result = await payment_service.start_payment(state_machine.context.amount, price=state_machine.context.price)
         transaction_id = result["transaction_id"]
         await broadcast(
             Event(
@@ -195,7 +205,7 @@ async def process_purchase_flow() -> None:
 
         status_payload = await payment_service.wait_for_authorization(
             transaction_id,
-            timeout_seconds=30,
+            timeout_seconds=config.payment_timeout_seconds,
         )
         status = status_payload["status"].lower()
         if status != "authorized":
