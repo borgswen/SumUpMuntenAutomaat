@@ -16,9 +16,9 @@ class PaymentService:
     async def disconnect(self) -> None:
         await self.driver.disconnect()
 
-    async def start_payment(self, amount: int) -> dict[str, Any]:
+    async def start_payment(self, amount: int, price: float | None = None) -> dict[str, Any]:
         try:
-            payment = await self.driver.start_payment(amount)
+            payment = await self.driver.start_payment(amount, price)
             return payment
         except Exception as exc:
             raise PaymentError(str(exc)) from exc

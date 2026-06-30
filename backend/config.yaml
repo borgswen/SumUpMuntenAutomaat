@@ -3,7 +3,13 @@ preset_amounts: [5, 10, 15, 20]
 use_simulator: true
 database_path: data/payments.sqlite
 sumup_api_base: https://api.sumup.com
+sumup_merchant_code: ""
+sumup_affiliate_app_id: sumup-muntenautomaat
+sumup_affiliate_key: ""
+sumup_reader_id: ""
+sumup_reader_code: ""
 sumup_currency: EUR
+payment_timeout_seconds: 30
 simulation:
   enabled: true
   payment:
