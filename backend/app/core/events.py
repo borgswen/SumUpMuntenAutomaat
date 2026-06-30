@@ -1,19 +1,23 @@
 from __future__ import annotations
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
 
 class EventType(str, Enum):
-    STATE_CHANGED = "state_changed"
-    PAYMENT_STARTED = "payment_started"
-    PAYMENT_UPDATED = "payment_updated"
-    PAYMENT_CANCELLED = "payment_cancelled"
-    HOPPER_STARTED = "hopper_started"
-    HOPPER_PROGRESS = "dispensing_progress"
-    HOPPER_COMPLETED = "hopper_completed"
-    HOPPER_EMPTY = "hopper_empty"
-    ERROR = "error"
+    MACHINE_STATE_CHANGED = "MachineStateChanged"
+    PAYMENT_STARTED = "PaymentStarted"
+    PAYMENT_SUCCEEDED = "PaymentSucceeded"
+    PAYMENT_FAILED = "PaymentFailed"
+    PAYMENT_CANCELLED = "PaymentCancelled"
+    DISPENSING_STARTED = "DispensingStarted"
+    DISPENSING_PROGRESS = "DispensingProgress"
+    DISPENSING_FINISHED = "DispensingFinished"
+    INVENTORY_CHANGED = "InventoryChanged"
+    HOPPER_EMPTY = "HopperEmpty"
+    MACHINE_RESET = "MachineReset"
+    ERROR_OCCURRED = "ErrorOccurred"
 
 
 @dataclass(frozen=True)
@@ -22,6 +26,8 @@ class MachineContext:
     price: float = 0.0
     transaction_id: str | None = None
     error: str | None = None
+    inventory: int | None = None
+    dispensed: int = 0
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -29,6 +35,8 @@ class MachineContext:
             "price": self.price,
             "transaction_id": self.transaction_id,
             "error": self.error,
+            "inventory": self.inventory,
+            "dispensed": self.dispensed,
         }
 
 
@@ -38,4 +46,8 @@ class Event:
     payload: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        return {"type": self.type.value, "payload": self.payload or {}}
+        return {
+            "type": self.type.value,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "payload": self.payload or {},
+        }

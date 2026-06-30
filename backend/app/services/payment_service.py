@@ -43,5 +43,5 @@ class PaymentService:
                 return status
             if status["status"].lower() in {"failed", "expired", "cancelled", "canceled"}:
                 raise PaymentError(f"Payment failed with status {status['status']}")
-            await asyncio.sleep(1.0)
+            await asyncio.sleep(0.25)
         raise PaymentTimeout("Payment did not authorize before timeout")

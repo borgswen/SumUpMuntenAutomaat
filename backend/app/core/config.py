@@ -1,5 +1,5 @@
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -25,8 +25,8 @@ class HopperSimulationConfig:
 @dataclass
 class SimulationConfig:
     enabled: bool = True
-    payment: PaymentSimulationConfig = PaymentSimulationConfig()
-    hopper: HopperSimulationConfig = HopperSimulationConfig()
+    payment: PaymentSimulationConfig = field(default_factory=PaymentSimulationConfig)
+    hopper: HopperSimulationConfig = field(default_factory=HopperSimulationConfig)
 
 
 @dataclass(frozen=True)
