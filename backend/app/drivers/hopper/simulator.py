@@ -4,7 +4,7 @@ import random
 from typing import Any
 
 from app.drivers.hopper.base import HopperDriver
-from app.core.exceptions import HopperError
+from app.core.exceptions import EmergencyStop, HopperEmpty, HopperError, HopperJam
 
 
 class SimulatorHopper(HopperDriver):
@@ -41,7 +41,9 @@ class SimulatorHopper(HopperDriver):
         if amount < 1:
             raise HopperError("Dispense amount must be at least 1")
         if self.inventory <= 0:
-            raise HopperError("Hopper empty")
+            raise HopperEmpty("Hopper empty")
+        if amount > self.inventory:
+            raise HopperEmpty("Not enough coins in hopper")
 
         self._stop_requested = False
         dispensed = 0
@@ -50,13 +52,13 @@ class SimulatorHopper(HopperDriver):
 
         while dispensed < total:
             if self._stop_requested:
-                raise HopperError("Emergency stop requested")
+                raise EmergencyStop("Emergency stop requested")
 
             if self.inventory <= 0:
-                raise HopperError("Hopper empty")
+                raise HopperEmpty("Hopper empty")
 
             if self.random_failures and random.random() < self.jam_probability:
-                raise HopperError("Hopper jammed")
+                raise HopperJam("Hopper jammed")
 
             await asyncio.sleep(interval)
             self.inventory -= 1

@@ -32,25 +32,10 @@ class SimulatorPayment(PaymentDriver):
             "amount": amount,
         }
 
-        await asyncio.sleep(self.delay_ms / 1000)
-
-        if self.payment_mode == "success":
-            self.transactions[transaction_id]["status"] = "authorized"
-            return {"transaction_id": transaction_id, "status": "authorized"}
-
-        if self.payment_mode == "reject":
-            self.transactions[transaction_id]["status"] = "failed"
-            return {"transaction_id": transaction_id, "status": "failed"}
-
         if self.payment_mode == "network_error":
-            self.transactions[transaction_id]["status"] = "pending"
             raise PaymentError("Simulated network error")
 
-        if self.payment_mode in {"timeout", "cancel"}:
-            return {"transaction_id": transaction_id, "status": "pending"}
-
-        self.transactions[transaction_id]["status"] = "authorized"
-        return {"transaction_id": transaction_id, "status": "authorized"}
+        return {"transaction_id": transaction_id, "status": "pending"}
 
     async def cancel_payment(self, transaction_id: str) -> None:
         if transaction_id not in self.transactions:
@@ -65,8 +50,15 @@ class SimulatorPayment(PaymentDriver):
         status = transaction["status"]
 
         if status == "pending" and transaction["amount"] >= 0:
-            if self.payment_mode == "timeout":
-                elapsed = time.monotonic() - transaction["created_at"]
+            elapsed = time.monotonic() - transaction["created_at"]
+            delay_seconds = self.delay_ms / 1000
+            if self.payment_mode == "success" and elapsed >= delay_seconds:
+                status = "authorized"
+                transaction["status"] = status
+            elif self.payment_mode == "reject" and elapsed >= delay_seconds:
+                status = "failed"
+                transaction["status"] = status
+            elif self.payment_mode == "timeout":
                 if elapsed >= (self.delay_ms / 1000):
                     status = "expired"
                     transaction["status"] = status

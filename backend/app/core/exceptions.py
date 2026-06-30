@@ -17,5 +17,13 @@ class HopperJam(HopperError):
     pass
 
 
+class HopperEmpty(HopperError):
+    pass
+
+
+class EmergencyStop(HopperError):
+    pass
+
+
 class ConfigurationError(Exception):
     pass
