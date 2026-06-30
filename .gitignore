@@ -4,21 +4,31 @@ __pycache__/
 *.pyo
 *.pyd
 *.env
-venv/
 .env
+venv/
+.venv/
 
-# SQLite
+# Python tooling
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+coverage/
+
+# SQLite and runtime data
 *.sqlite
 *.sqlite3
+*.db
+backend/data/
 
 # Secrets
 backend/secret.yaml
 
-# Runtime database
-backend/data/
-*.db
-
-# IDE
-.vscode/
+# Frontend
 node_modules/
+frontend/dist/
+frontend/.vite/
+
+# IDE and OS
+.vscode/
 .DS_Store
