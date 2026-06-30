@@ -36,16 +36,19 @@ class AppConfig:
     use_simulator: bool
     database_path: Path
     sumup_api_base: str
+    sumup_merchant_code: str | None
+    sumup_affiliate_app_id: str
+    sumup_affiliate_key: str | None
+    sumup_reader_id: str | None
+    sumup_reader_code: str | None
     sumup_currency: str
+    payment_timeout_seconds: int
     simulation: SimulationConfig
 
 
 @dataclass(frozen=True)
 class SecretConfig:
-    sumup_client_id: str | None
-    sumup_client_secret: str | None
-    sumup_refresh_token: str | None
-    sumup_merchant_email: str | None
+    sumup_api_key: str | None
 
 
 BASE_DIR = Path(__file__).resolve().parents[2]
@@ -71,6 +74,14 @@ def _env_override(key: str, default: Any) -> Any:
     if isinstance(default, float):
         return float(value)
     return value
+
+
+def _optional_string(data: dict[str, Any], key: str) -> str | None:
+    value = data.get(key)
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
 
 
 def load_config() -> AppConfig:
@@ -101,7 +112,13 @@ def load_config() -> AppConfig:
         use_simulator=bool(data.get("use_simulator", True)),
         database_path=Path(data.get("database_path", "data/payments.sqlite")),
         sumup_api_base=str(data.get("sumup_api_base", "https://api.sumup.com")),
+        sumup_merchant_code=_optional_string(data, "sumup_merchant_code"),
+        sumup_affiliate_app_id=str(data.get("sumup_affiliate_app_id", "sumup-muntenautomaat")),
+        sumup_affiliate_key=_optional_string(data, "sumup_affiliate_key"),
+        sumup_reader_id=_optional_string(data, "sumup_reader_id"),
+        sumup_reader_code=_optional_string(data, "sumup_reader_code"),
         sumup_currency=str(data.get("sumup_currency", "EUR")),
+        payment_timeout_seconds=int(data.get("payment_timeout_seconds", 30)),
         simulation=simulation,
     )
 
@@ -109,8 +126,5 @@ def load_config() -> AppConfig:
 def load_secrets() -> SecretConfig:
     data = _load_yaml(SECRET_PATH)
     return SecretConfig(
-        sumup_client_id=data.get("sumup_client_id"),
-        sumup_client_secret=data.get("sumup_client_secret"),
-        sumup_refresh_token=data.get("sumup_refresh_token"),
-        sumup_merchant_email=data.get("sumup_merchant_email"),
+        sumup_api_key=os.environ.get("SUMUP_API_KEY") or _optional_string(data, "sumup_api_key"),
     )

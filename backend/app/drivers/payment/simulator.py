@@ -21,7 +21,7 @@ class SimulatorPayment(PaymentDriver):
     async def disconnect(self) -> None:
         self.connected = False
 
-    async def start_payment(self, amount: int) -> dict[str, str]:
+    async def start_payment(self, amount: int, price: float | None = None) -> dict[str, str]:
         if not self.connected:
             raise PaymentError("Simulator payment driver is not connected")
 
@@ -30,6 +30,7 @@ class SimulatorPayment(PaymentDriver):
             "status": "pending",
             "created_at": time.monotonic(),
             "amount": amount,
+            "price": price,
         }
 
         if self.payment_mode == "network_error":
